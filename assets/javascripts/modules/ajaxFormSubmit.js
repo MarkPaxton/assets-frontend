@@ -128,15 +128,21 @@ var ajaxFormSubmit = {
   },
 
   serializeForAjax: function(formScope) {
-    var ret = ['isajax=true'];
+    var result = ['isajax=true'];
     $.each($(formScope).find(':input'), function() {
       var input = $(this);
       if (!input.data('ajax-header')) {
-        ret.push(encodeURIComponent(this.name) + '=' + encodeURIComponent(input.val()));
+        if (input.attr('type') == 'radio') {
+          if (input.prop('checked')) {
+            result.push(encodeURIComponent(this.name) + '=' + encodeURIComponent(input.val()));
+          }
+        } else {
+          result.push(encodeURIComponent(this.name) + '=' + encodeURIComponent(input.val()));
+        }
       }
     });
 
-    return ret.join('&').replace(/%20/g, '+').replace(/=$/, '').replace(/&$/, '');
+    return result.join('&').replace(/%20/g, '+').replace(/=$/, '').replace(/&$/, '');
   },
 
   // read ajax header value from input fields

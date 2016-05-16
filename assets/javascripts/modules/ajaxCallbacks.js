@@ -107,6 +107,94 @@ var ajaxCallbacks = {
       }
     }
   },
+  apiCollaboratorResponse: {
+    callbacks: {
+      success: function(response, $element, data, helpers, targets, container, type) {
+        var email = $element.find('[name=email]').val();
+        var list = $('[data-collaborator-list]');
+        var row = list.children().first().clone(true);
+        var children = row.children();
+        var form = children.last().find('.form');
+        var message = response.registeredUser ?
+                    'We have sent an email to <strong>'+ email +'</strong> confirming they have been added to this application.' :
+                    'We have sent an email to <strong>'+ email +'</strong> inviting them to register with the API Developer Hub. ' +
+                    'They cannot access the application until they register.';
+
+        // set attributes
+        row.attr('data-collaborator-row', email);
+        children.last().find('[type="submit"]').attr('data-remove-collaborator-link', email);
+        form.attr('action', form.attr('action') + email);
+
+        // set display values
+        children.first().text(email);
+        if ($element.find('[name=role]:checked').val() !== 'ADMINISTRATOR') {
+          children.eq(1).empty();
+        }
+
+        // add to the list
+        list.append(row.removeClass('hidden'));
+
+        // remove any error validation
+        $element.find('.form-field--error').removeClass('form-field--error');
+
+        // display alert info
+        $element.find('.js-info').html(message).removeClass('hidden');
+
+        // reset form state & clear value
+        helpers.resetForms(helpers, type, data, container);
+        $element.find('[name=email]').val('');
+
+        helpers.base.success.apply(null, arguments);
+      },
+
+      error: function(response, $element, data, helpers, targets, container, type) {
+        var $email = $element.find('[name=email]');
+        var $error = $email.siblings('.error-notification');
+
+        // add error state class
+        $email.parent().addClass('form-field--error');
+
+        // add error message
+        if ($error.length === 0) {
+          $('<p class="error-notification" data-field-error-email>'+ response.message + '</p>').insertBefore($email);
+        } else {
+          $error.text(response.message);
+        }
+
+        // hide alert info
+        $element.find('.js-info').empty().addClass('hidden');
+
+        helpers.base.error.apply(null, arguments);
+      },
+
+      always: function(response, $element, data, helpers, targets, container, type, actions) {
+        // reset form state
+        helpers.utilities.setFormState($element, false);
+      }
+    }
+  },
+  apiCollaboratorRemoveResponse: {
+    callbacks: {
+      success: function(response, $element, data, helpers, targets, container, type) {
+        var $button = $element.find('[type=submit]');
+        var emailAddress = $button.data('remove-collaborator-link');
+
+        // remove row
+        $('[data-collaborator-row="' + emailAddress + '"]').remove();
+
+        helpers.base.success.apply(null, arguments);
+      },
+
+      error: function(response, $element, data, helpers, targets, container, type) {
+        // reset form state
+        helpers.utilities.setFormState($element, false);
+
+        // show error message
+        $element.find('.js-remove-error').addClass('inline-block');
+        helpers.base.error.apply(null, arguments);
+      }
+    }
+  },
   apiSubscribeResponse: {
     callbacks: {
       success: function(response, $element, data, helpers) {
